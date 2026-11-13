@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Elniv: a quiet place to think things through</title>
+    <meta
+      name="description"
+      content="Elniv is a calm AI companion for reflection and clearer thinking. Talk things through, check in with yourself, and bring your own model if you want to."
+    />
+    <meta name="theme-color" content="#0d1317" />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icons/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta property="og:site_name" content="Elniv" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Elniv: a quiet place to think things through" />
+    <meta
+      property="og:description"
+      content="A calm AI companion for reflection and clearer thinking."
+    />
+    <meta name="twitter:card" content="summary" />
+    <script>
+      try {
+        var t = localStorage.getItem("elniv.theme");
+        var dark = t === "dark" || ((t === null || t === "system") && matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+        if (localStorage.getItem("elniv.motion") === "reduced") document.documentElement.dataset.motion = "reduced";
+        document.querySelector('meta[name="theme-color"]').setAttribute("content", dark ? "#0d1317" : "#f6f3ec");
+      } catch (e) {
+        document.documentElement.dataset.theme = "dark";
+      }
+    </script>
+    <!--ASSETS_HEAD-->
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>Elniv needs JavaScript to run. Please enable it and reload.</noscript>
+    <!--ASSETS_BODY-->
+  </body>
+</html>

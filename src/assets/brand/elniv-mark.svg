@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Elniv">
+  <defs>
+    <linearGradient id="elniv-body" x1="14" y1="8" x2="82" y2="92" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#a596e6"/>
+      <stop offset="0.5" stop-color="#76b3b6"/>
+      <stop offset="1" stop-color="#4fa392"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-8 48 50)">
+    <g fill="url(#elniv-body)" stroke="url(#elniv-body)">
+      <path stroke="none" d="M13 52C11 29 27 10 45 10c20 0 37 14 36 37-.3 8-4 11-10 10-10-1-30 3-48 2-6 0-10-2-10-7Z"/>
+      <path fill="none" stroke-width="9.5" stroke-linecap="round" d="M29 57c1 11-7 14-6 25"/>
+      <path fill="none" stroke-width="9.5" stroke-linecap="round" d="M47 59c-1 12 7 18 3 30"/>
+      <path fill="none" stroke-width="9.5" stroke-linecap="round" d="M66 57c-1 9 6 12 5 20"/>
+    </g>
+    <path fill="#0e171c" d="M25 41c1-10 9-15 19-13-6 2-10 7-10 13s3 11 9 12c-10 4-19-2-18-12Z"/>
+  </g>
+  <circle cx="80" cy="11" r="3.8" fill="#c9bff2"/>
+</svg>

@@ -1,0 +1,31 @@
+{
+  "name": "elniv-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Elniv web app: a calm AI companion for reflection and clearer thinking.",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/preview.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test \"tests/**/*.test.ts\"",
+    "icons": "node scripts/make-icons.mjs"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "esbuild": "^0.28.0",
+    "sharp": "^0.35.0",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
