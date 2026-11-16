@@ -8,7 +8,7 @@ import { Markdown } from "../lib/markdown";
 import { chatApi, loadAllMessages, voiceApi } from "../lib/endpoints";
 import { ApiError, isAbort } from "../lib/api";
 import { useConversations } from "../lib/conversations";
-import { navigate, useLocation, matchRoute } from "../lib/router";
+import { navigate, useLocation, matchRoute, Link } from "../lib/router";
 import { useOnline, usePageMeta, useSession } from "../lib/hooks";
 import { displayName } from "../lib/auth";
 import { formatDuration, greeting, timeLabel } from "../lib/format";
@@ -296,6 +296,14 @@ export function ChatPage() {
               <Mark size={84} motion="float" />
               <h1>{greeting(name)}</h1>
               <p>This is a quiet space. Say whatever is on your mind, in your own words, at your own pace.</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center", margin: "16px 0 8px" }}>
+                <Link to="/checkin" className="btn btn--primary btn--sm">
+                  <Icon name="spark" size={16} /> Start a check-in instead
+                </Link>
+                <Link to="/activities" className="btn btn--ghost btn--sm">
+                  <Icon name="wind" size={16} /> Activities & Reset
+                </Link>
+              </div>
               <div className="starters">
                 {starters.map((text) => (
                   <button
@@ -314,8 +322,14 @@ export function ChatPage() {
             </div>
           )}
 
-          {messages.map((message) =>
-            message.role === "user" ? (
+          {messages.map((message) => {
+            const isAsst = message.role === "assistant";
+            const hasGrounding = isAsst && /grounding|5-4-3-2-1/i.test(message.content);
+            const hasBreathing = isAsst && /breathing|breath pause/i.test(message.content);
+            const hasReset = isAsst && /reset space|activities|calm reset/i.test(message.content);
+            const hasCrisis = isAsst && /suicide|self-harm|harming myself|crisis line|helpline|emergency number/i.test(message.content);
+
+            return message.role === "user" ? (
               <div key={message.id} className={`msg msg--user ${message.failed ? "msg--failed" : ""}`}>
                 <div className="msg__bubble">{message.content}</div>
                 {message.failed && (
@@ -333,6 +347,40 @@ export function ChatPage() {
                   <Mark size={30} />
                   <div className="msg__body">
                     <Markdown text={message.content} />
+
+                    {hasCrisis && (
+                      <div className="notice notice--lav" style={{ marginTop: 12, fontSize: "0.875rem" }}>
+                        <strong>Need immediate, confidential support?</strong>
+                        <p style={{ margin: "4px 0" }}>If you or someone you know is going through a crisis, please connect with someone who can support you right now:</p>
+                        <ul style={{ margin: "4px 0 0 16px", padding: 0 }}>
+                          <li><strong>US & Canada:</strong> Call or text <strong>988</strong></li>
+                          <li><strong>India:</strong> KIRAN Helpline <strong>1800-599-0019</strong> or Vandrevala Foundation</li>
+                          <li><strong>UK:</strong> Call <strong>111</strong> or <strong>999</strong></li>
+                          <li><strong>Worldwide:</strong> <a href="https://www.befrienders.org" target="_blank" rel="noopener noreferrer">Befrienders Worldwide</a></li>
+                        </ul>
+                      </div>
+                    )}
+
+                    {(hasGrounding || hasBreathing || hasReset) && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
+                        {hasGrounding && (
+                          <Link to="/activities?tool=grounding" className="btn btn--sm btn--ghost" style={{ background: "var(--surface-2)", fontSize: "0.8125rem" }}>
+                            <Icon name="feather" size={14} /> Try 5-4-3-2-1 Grounding
+                          </Link>
+                        )}
+                        {hasBreathing && (
+                          <Link to="/activities?tool=breathing" className="btn btn--sm btn--ghost" style={{ background: "var(--surface-2)", fontSize: "0.8125rem" }}>
+                            <Icon name="wind" size={14} /> Gentle Breathing Pause
+                          </Link>
+                        )}
+                        {hasReset && (
+                          <Link to="/activities" className="btn btn--sm btn--ghost" style={{ background: "var(--surface-2)", fontSize: "0.8125rem" }}>
+                            <Icon name="spark" size={14} /> Open Reset Space
+                          </Link>
+                        )}
+                      </div>
+                    )}
+
                     <div className="msg__meta">
                       <span>{timeLabel(message.created_at)}</span>
                       <button type="button" className="icon-btn icon-btn--sm" aria-label="Copy reply" onClick={() => void copy(message)}>
@@ -353,8 +401,8 @@ export function ChatPage() {
                   </div>
                 </div>
               </div>
-            ),
-          )}
+            );
+          })}
 
           {waiting && (
             <div className="thinking" role="status">
@@ -442,7 +490,7 @@ export function ChatPage() {
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={onKeyDown}
-                placeholder="Write what's on your mind…"
+                placeholder="Write whatever is on your mind… (English, Hindi, Bengali, Hinglish…)"
                 aria-label="Message"
                 enterKeyHint="send"
                 autoComplete="off"
