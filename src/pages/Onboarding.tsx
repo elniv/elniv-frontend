@@ -28,9 +28,7 @@ export function OnboardingPage() {
     setError(null);
     try {
       await updateUser({ data: { display_name: name.trim(), intent, onboarded: true } });
-      const next = new URLSearchParams(window.location.search).get("next");
-      const target = next && next.startsWith("/") && !next.startsWith("//") ? next : "/home";
-      navigate(target, { replace: true });
+      navigate("/chat", { replace: true });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't save that. Please try again.");
       setBusy(false);
