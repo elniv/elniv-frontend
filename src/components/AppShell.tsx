@@ -146,32 +146,26 @@ export function AppShell({ children }: { children: ReactNode }) {
       </a>
       <aside ref={rail} className={`rail ${open ? "is-open" : ""}`} aria-label="Elniv navigation">
         <div className="rail__top">
-          <Brand to="/home" />
+          <Brand to="/chat" />
           <button type="button" className="icon-btn" onClick={() => setOpen(false)} aria-label="Close menu" style={{ display: open ? "grid" : "none" }}>
             <Icon name="x" />
           </button>
         </div>
-        <Link to="/checkin" className="btn btn--primary btn--block" onClick={() => setOpen(false)}>
-          <Icon name="spark" size={18} /> Start a check-in
+        <Link to="/chat" className="btn btn--primary btn--block" onClick={() => setOpen(false)}>
+          <Icon name="plus" size={18} /> New conversation
         </Link>
         <nav className="nav" aria-label="Sections" style={{ marginTop: 12 }}>
-          <Link to="/home" aria-current={pathname === "/home" ? "page" : undefined} onClick={() => setOpen(false)}>
-            <Icon name="home" size={18} /> Home
-          </Link>
-          <Link to="/chat" aria-current={pathname.startsWith("/chat") ? "page" : undefined} onClick={() => setOpen(false)}>
+          <Link to="/chat" aria-current={pathname.startsWith("/chat") ? "page" : undefined}>
             <Icon name="chat" size={18} /> Conversations
           </Link>
-          <Link to="/activities" aria-current={pathname.startsWith("/activities") ? "page" : undefined} onClick={() => setOpen(false)}>
-            <Icon name="wind" size={18} /> Activities & Reset
+          <Link to="/checkins" aria-current={pathname === "/checkins" ? "page" : undefined}>
+            <Icon name="pulse" size={18} /> Check-ins
           </Link>
-          <Link to="/checkins" aria-current={pathname === "/checkins" ? "page" : undefined} onClick={() => setOpen(false)}>
-            <Icon name="pulse" size={18} /> Check-in history
-          </Link>
-          <Link to="/settings" aria-current={pathname === "/settings" ? "page" : undefined} onClick={() => setOpen(false)}>
+          <Link to="/settings" aria-current={pathname === "/settings" ? "page" : undefined}>
             <Icon name="settings" size={18} /> Settings
           </Link>
         </nav>
-        <div className="eyebrow rail__label">Recent conversations</div>
+        <div className="eyebrow rail__label">Recent</div>
         <div className="rail__list">
           {status === "loading" && <ListSkeleton rows={5} label="Loading conversations" />}
           {status === "error" && (
@@ -233,10 +227,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <button ref={menuButton} type="button" className="icon-btn" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}>
             <Icon name="menu" />
           </button>
-          <Brand to="/home" />
-          <Link to="/checkin" className="btn btn--sm btn--primary topbar__cta" aria-label="Start check-in">
-            <Icon name="spark" size={15} />
-            <span className="topbar__cta-text">Check-in</span>
+          <Brand to="/chat" />
+          <Link to="/chat" className="icon-btn" aria-label="New conversation">
+            <Icon name="plus" />
           </Link>
         </header>
         {!online && (
@@ -247,24 +240,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main id="main" tabIndex={-1} style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
           {children}
         </main>
-        <nav className="mobile-nav" aria-label="Quick navigation">
-          <Link to="/home" className="mobile-nav__item" aria-current={pathname === "/home" ? "page" : undefined}>
-            <Icon name="home" size={20} />
-            <span>Home</span>
-          </Link>
-          <Link to="/checkin" className="mobile-nav__item" aria-current={pathname === "/checkin" ? "page" : undefined}>
-            <Icon name="spark" size={20} />
-            <span>Check-in</span>
-          </Link>
-          <Link to="/chat" className="mobile-nav__item" aria-current={pathname.startsWith("/chat") ? "page" : undefined}>
-            <Icon name="chat" size={20} />
-            <span>Talk</span>
-          </Link>
-          <Link to="/activities" className="mobile-nav__item" aria-current={pathname.startsWith("/activities") ? "page" : undefined}>
-            <Icon name="wind" size={20} />
-            <span>Reset</span>
-          </Link>
-        </nav>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { PublicLayout } from "../components/PublicLayout";
 import { Mark } from "../components/Logo";
-import { Link, navigate, useLocation } from "../lib/router";
+import { Link, navigate, safeNext, useLocation } from "../lib/router";
 import { AuthError, requestPasswordReset, signIn, signUp, updateUser } from "../lib/auth";
 import { usePageMeta } from "../lib/hooks";
 import { useToast } from "../lib/toast";
@@ -26,9 +26,7 @@ function AuthFrame({ title, intro, children }: { title: string; intro?: string; 
   );
 }
 
-function safeNext(value: string | null): string {
-  return value && value.startsWith("/") && !value.startsWith("//") ? value : "/home";
-}
+export { safeNext };
 
 export function LoginPage() {
   usePageMeta("Sign in", { index: true });
@@ -58,14 +56,6 @@ export function LoginPage() {
 
   return (
     <AuthFrame title="Welcome back" intro="Sign in to pick up where you left off.">
-      <div className="segmented" style={{ width: "100%", marginBottom: 16 }}>
-        <button type="button" aria-pressed="true" style={{ flex: 1 }}>
-          Sign In
-        </button>
-        <button type="button" aria-pressed="false" style={{ flex: 1 }} onClick={() => navigate(signupUrl)}>
-          Create Account
-        </button>
-      </div>
       <form className="form" onSubmit={submit} noValidate>
         <div className="field">
           <label htmlFor="email">Email</label>
@@ -116,16 +106,8 @@ export function SignupPage() {
     setBusy(true);
     try {
       const result = await signUp(email.trim(), password, name.trim());
-      if ("session" in result) {
-        try {
-          await updateUser({ data: { display_name: name.trim(), onboarded: true } });
-        } catch {
-          // ignore
-        }
-        navigate(safeNext(next), { replace: true });
-      } else {
-        setSent(true);
-      }
+      if ("session" in result) navigate(safeNext(next, "/onboarding"), { replace: true });
+      else setSent(true);
     } catch (e) {
       setError(e instanceof AuthError ? e.message : "Couldn't create your account. Please try again.");
     } finally {
@@ -145,14 +127,6 @@ export function SignupPage() {
 
   return (
     <AuthFrame title="Create your account" intro="A calm place to think things through. It only takes a moment.">
-      <div className="segmented" style={{ width: "100%", marginBottom: 16 }}>
-        <button type="button" aria-pressed="false" style={{ flex: 1 }} onClick={() => navigate(loginUrl)}>
-          Sign In
-        </button>
-        <button type="button" aria-pressed="true" style={{ flex: 1 }}>
-          Create Account
-        </button>
-      </div>
       <form className="form" onSubmit={submit} noValidate>
         <div className="field">
           <label htmlFor="name">What should we call you?</label>
@@ -173,7 +147,7 @@ export function SignupPage() {
           </p>
         )}
         <button type="submit" className="btn btn--primary btn--block" disabled={busy}>
-          {busy ? "Creating account…" : "Create account"}
+          {busy ? "Creating…" : "Create account"}
         </button>
         <p className="auth__alt">
           Already have an account? <Link to={loginUrl}>Sign in</Link>

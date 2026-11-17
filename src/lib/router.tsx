@@ -45,6 +45,11 @@ export function matchRoute(pattern: string, pathname: string): Record<string, st
   return params;
 }
 
+/** Safely extract an in-app path for post-auth redirection, guarding against open redirects. */
+export function safeNext(value: string | null, fallback = "/chat"): string {
+  return value && value.startsWith("/") && !value.startsWith("//") ? value : fallback;
+}
+
 interface LinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> {
   to: string;
   replace?: boolean;

@@ -1,4 +1,12 @@
-const clean = (value: string | undefined): string => (typeof value === "string" ? value.trim().replace(/\/+$/, "") : "");
+const clean = (value: string | undefined): string => {
+  if (typeof value !== "string") return "";
+  let v = value.trim().replace(/\/+$/, "");
+  const pgMatch = v.match(/postgres(?:ql)?:\/\/(?:postgres\.)?([a-z0-9_-]+):/i);
+  if (pgMatch && pgMatch[1]) {
+    v = `https://${pgMatch[1]}.supabase.co`;
+  }
+  return v;
+};
 
 /** Public build-time configuration (see .env.example). Mutable so tests can override it. */
 export const config = {

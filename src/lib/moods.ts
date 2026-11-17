@@ -6,21 +6,14 @@ export interface MoodOption {
 }
 
 export const MOODS: readonly MoodOption[] = [
-  { label: "Calm", score: 4, color: "#6fb0b8" },
-  { label: "Happy", score: 5, color: "#8fc2a0" },
-  { label: "Anxious", score: 2, color: "#d5a67e" },
-  { label: "Overwhelmed", score: 1, color: "#d4857f" },
-  { label: "Sad", score: 1, color: "#c58f9c" },
-  { label: "Frustrated", score: 2, color: "#d2927c" },
-  { label: "Confused", score: 3, color: "#a8a0d8" },
-  { label: "Numb", score: 1, color: "#9a9fc0" },
-  { label: "Exhausted", score: 2, color: "#a59ba5" },
-  { label: "Not sure", score: 3, color: "#8191a0" },
   { label: "Hopeful", score: 5, color: "#7fb8a8" },
   { label: "Grateful", score: 5, color: "#8fc2a0" },
+  { label: "Calm", score: 4, color: "#6fb0b8" },
   { label: "Okay", score: 3, color: "#a8a0d8" },
   { label: "Tired", score: 2, color: "#9a9fc0" },
+  { label: "Anxious", score: 2, color: "#d5a67e" },
   { label: "Low", score: 1, color: "#c58f9c" },
+  { label: "Overwhelmed", score: 1, color: "#d4857f" },
 ];
 
 export const FOCUS_AREAS: readonly string[] = ["Work", "Relationships", "Health", "Money", "Sleep", "Self-worth", "A decision", "Something else"];

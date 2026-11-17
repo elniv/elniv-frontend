@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { AppShell } from "./components/AppShell";
 import { ConfigMissingPage, LandingPage, LoadingScreen, NotFoundPage, AboutPage } from "./pages/Public";
-import { ForgotPasswordPage, LoginPage, ResetPasswordPage, SignupPage } from "./pages/AuthPages";
+import { ForgotPasswordPage, LoginPage, ResetPasswordPage, SignupPage, safeNext } from "./pages/AuthPages";
 import { ConversationsProvider } from "./lib/conversations";
 import { consumeAuthRedirect, isOnboarded, refreshSession, watchOtherTabs } from "./lib/auth";
 import { configIssues } from "./lib/config";
@@ -11,9 +11,6 @@ import { matchRoute, navigate, useLocation } from "./lib/router";
 import { useToast } from "./lib/toast";
 
 // Heavier screens load on demand.
-const HomePage = lazy(() => import("./pages/Home").then((m) => ({ default: m.HomePage })));
-const CheckinFlowPage = lazy(() => import("./pages/CheckinFlow").then((m) => ({ default: m.CheckinFlowPage })));
-const ActivitiesPage = lazy(() => import("./pages/Activities").then((m) => ({ default: m.ActivitiesPage })));
 const ChatPage = lazy(() => import("./pages/Chat").then((m) => ({ default: m.ChatPage })));
 const CheckinsPage = lazy(() => import("./pages/Checkins").then((m) => ({ default: m.CheckinsPage })));
 const SettingsPage = lazy(() => import("./pages/Settings").then((m) => ({ default: m.SettingsPage })));
@@ -28,7 +25,9 @@ function Protected({ children }: { children: ReactNode }) {
   const session = useSession();
   const { pathname, search } = useLocation();
   if (!session) {
-    const next = encodeURIComponent(pathname + (search.toString() ? `?${search.toString()}` : ""));
+    const searchStr = search.toString();
+    const destination = pathname + (searchStr ? `?${searchStr}` : "");
+    const next = searchStr ? encodeURIComponent(destination) : destination;
     return <Redirect to={`/login?next=${next}`} />;
   }
   return <>{children}</>;
@@ -49,7 +48,7 @@ function AppArea({ children }: { children: ReactNode }) {
 export function App() {
   const toast = useToast();
   const session = useSession();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const [ready, setReady] = useState(false);
 
   // On startup: handle email-link redirects (confirmation, recovery) and refresh a stale session.
@@ -79,9 +78,9 @@ export function App() {
   if (!ready) return <LoadingScreen />;
 
   const signedIn = session !== null;
-  const guestOnly = (page: ReactNode) => (signedIn ? <Redirect to="/home" /> : page);
+  const guestOnly = (page: ReactNode) => (signedIn ? <Redirect to={safeNext(search.get("next"))} /> : page);
 
-  if (pathname === "/") return signedIn ? <Redirect to="/home" /> : <LandingPage />;
+  if (pathname === "/") return <LandingPage />;
   if (pathname === "/about") return <AboutPage />;
   if (pathname === "/login") return guestOnly(<LoginPage />);
   if (pathname === "/signup") return guestOnly(<SignupPage />);
@@ -92,7 +91,7 @@ export function App() {
     return (
       <Protected>
         {session && isOnboarded(session.user) ? (
-          <Redirect to="/home" />
+          <Redirect to="/chat" />
         ) : (
           <Suspense fallback={<LoadingScreen />}>
             <OnboardingPage />
@@ -102,33 +101,6 @@ export function App() {
     );
   }
 
-  if (pathname === "/home") {
-    return (
-      <Protected>
-        <AppArea>
-          <HomePage />
-        </AppArea>
-      </Protected>
-    );
-  }
-  if (pathname === "/checkin") {
-    return (
-      <Protected>
-        <AppArea>
-          <CheckinFlowPage />
-        </AppArea>
-      </Protected>
-    );
-  }
-  if (pathname === "/activities") {
-    return (
-      <Protected>
-        <AppArea>
-          <ActivitiesPage />
-        </AppArea>
-      </Protected>
-    );
-  }
   if (pathname === "/chat" || matchRoute("/chat/:id", pathname)) {
     return (
       <Protected>
@@ -138,7 +110,7 @@ export function App() {
       </Protected>
     );
   }
-  if (pathname === "/checkins") {
+  if (pathname === "/checkin" || pathname === "/checkins") {
     return (
       <Protected>
         <AppArea>

@@ -2,12 +2,13 @@ import { PublicLayout } from "../components/PublicLayout";
 import { Mark } from "../components/Logo";
 import { Footer } from "../components/Footer";
 import { Link } from "../lib/router";
-import { usePageMeta } from "../lib/hooks";
+import { usePageMeta, useSession } from "../lib/hooks";
 import { BRAND } from "../lib/brand";
 import { configIssues } from "../lib/config";
 
 export function LandingPage() {
   usePageMeta(null, { index: true });
+  const signedIn = useSession() !== null;
   return (
     <PublicLayout>
       <section className="hero">
@@ -18,14 +19,11 @@ export function LandingPage() {
           <h1>A quiet place to think things through.</h1>
           <p className="lead">Talk it out with a calm companion, check in with how you really feel, and bring your own model if you'd like. No noise, no pressure.</p>
           <div className="hero__cta">
-            <Link to="/checkin" className="btn btn--primary">
-              Start a check-in
-            </Link>
-            <Link to="/chat" className="btn btn--ghost" style={{ color: "var(--text-2)" }}>
+            <Link to="/chat" className="btn btn--primary">
               Talk to Elniv
             </Link>
-            <Link to="/about" className="btn btn--ghost">
-              How it works
+            <Link to="/checkin" className="btn">
+              Start a check-in
             </Link>
           </div>
         </div>

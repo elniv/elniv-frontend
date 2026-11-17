@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parseMarkdown, parseInline } from "../src/lib/markdown.tsx";
-import { matchRoute } from "../src/lib/router.tsx";
+import { matchRoute, safeNext } from "../src/lib/router.tsx";
 import { dayLabel, formatDuration, greeting } from "../src/lib/format.ts";
 import { summarizeCheckins, moodMeta } from "../src/lib/moods.ts";
 import { messageFromBody } from "../src/lib/api.ts";
@@ -31,9 +31,6 @@ test("router: matchRoute", () => {
   assert.equal(matchRoute("/chat/:id", "/chat"), null);
   assert.equal(matchRoute("/chat/:id", "/settings/abc"), null);
   assert.deepEqual(matchRoute("/chat/:id", "/chat/a%20b/"), { id: "a b" });
-  assert.deepEqual(matchRoute("/activities", "/activities"), {});
-  assert.deepEqual(matchRoute("/checkin", "/checkin"), {});
-  assert.deepEqual(matchRoute("/home", "/home"), {});
 });
 
 test("format: duration, day labels, greeting", () => {
@@ -51,19 +48,12 @@ test("moods: summary uses only real entries and is case-insensitive", () => {
     { mood: "anxious", focus_area: "Work" },
     { mood: "Anxious", focus_area: "Work" },
     { mood: "Calm", focus_area: "Sleep" },
-    { mood: "Overwhelmed", focus_area: "Relationships" },
-    { mood: "Confused", focus_area: "Decision" },
-    { mood: "Exhausted", focus_area: "Rest" },
     { mood: "Unknown mood", focus_area: "Work" },
   ];
   const s = summarizeCheckins(items);
   assert.equal(s.topFocus, "Work");
-  assert.equal(s.scores.length, 6); // unknown moods are excluded from the trend
+  assert.equal(s.scores.length, 3); // unknown moods are excluded from the trend
   assert.equal(moodMeta("CALM")?.label, "Calm");
-  assert.equal(moodMeta("OVERWHELMED")?.label, "Overwhelmed");
-  assert.equal(moodMeta("frustrated")?.label, "Frustrated");
-  assert.equal(moodMeta("numb")?.label, "Numb");
-  assert.equal(moodMeta("not sure")?.label, "Not sure");
   assert.deepEqual(summarizeCheckins([]), { topMood: null, topFocus: null, scores: [] });
 });
 
@@ -82,4 +72,15 @@ test("voice: file extension from mime type", () => {
   assert.equal(extensionFor("audio/webm;codecs=opus"), "webm");
   assert.equal(extensionFor("audio/mp4"), "m4a");
   assert.equal(extensionFor("audio/ogg"), "ogg");
+});
+
+test("auth: safeNext preserves valid paths and rejects open redirects", () => {
+  assert.equal(safeNext("/checkin"), "/checkin");
+  assert.equal(safeNext("/chat"), "/chat");
+  assert.equal(safeNext("/chat?draft=hello"), "/chat?draft=hello");
+  assert.equal(safeNext(null), "/chat");
+  assert.equal(safeNext(null, "/onboarding"), "/onboarding");
+  assert.equal(safeNext("https://malicious.com"), "/chat");
+  assert.equal(safeNext("//malicious.com"), "/chat");
+  assert.equal(safeNext("javascript:alert(1)"), "/chat");
 });
