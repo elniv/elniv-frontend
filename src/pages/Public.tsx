@@ -19,11 +19,19 @@ export function LandingPage() {
           <h1>A quiet place to think things through.</h1>
           <p className="lead">Talk it out with a calm companion, check in with how you really feel, and bring your own model if you'd like. No noise, no pressure.</p>
           <div className="hero__cta">
+<<<<<<< HEAD
             <Link to="/chat" className="btn btn--primary">
               Talk to Elniv
             </Link>
             <Link to="/checkin" className="btn">
               Start a check-in
+=======
+            <Link to={signedIn ? "/chat" : "/signup"} className="btn btn--primary">
+              {signedIn ? "Open Elniv" : "Start talking"}
+            </Link>
+            <Link to="/about" className="btn">
+              How it works
+>>>>>>> a38032910f9fccf6a2b0b70cdb439a40e7251774
             </Link>
           </div>
         </div>

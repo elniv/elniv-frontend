@@ -81,6 +81,7 @@ export function App() {
   const guestOnly = (page: ReactNode) => (signedIn ? <Redirect to={safeNext(search.get("next"))} /> : page);
 
   if (pathname === "/") return <LandingPage />;
+  if (pathname === "/") return <LandingPage />;
   if (pathname === "/about") return <AboutPage />;
   if (pathname === "/login") return guestOnly(<LoginPage />);
   if (pathname === "/signup") return guestOnly(<SignupPage />);
@@ -91,6 +92,7 @@ export function App() {
     return (
       <Protected>
         {session && isOnboarded(session.user) ? (
+          <Redirect to="/chat" />
           <Redirect to="/chat" />
         ) : (
           <Suspense fallback={<LoadingScreen />}>
