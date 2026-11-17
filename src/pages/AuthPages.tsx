@@ -26,17 +26,12 @@ function AuthFrame({ title, intro, children }: { title: string; intro?: string; 
   );
 }
 
-<<<<<<< HEAD
 export { safeNext };
-=======
-function safeNext(value: string | null): string {
-  return value && value.startsWith("/") && !value.startsWith("//") ? value : "/chat";
-}
->>>>>>> a38032910f9fccf6a2b0b70cdb439a40e7251774
 
 export function LoginPage() {
   usePageMeta("Sign in", { index: true });
   const { search } = useLocation();
+  const next = search.get("next");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -50,12 +45,14 @@ export function LoginPage() {
     setBusy(true);
     try {
       await signIn(email.trim(), password);
-      navigate(safeNext(search.get("next")), { replace: true });
+      navigate(safeNext(next), { replace: true });
     } catch (e) {
       setError(e instanceof AuthError ? e.message : "Couldn't sign you in. Please try again.");
       setBusy(false);
     }
   };
+
+  const signupUrl = next ? `/signup?next=${encodeURIComponent(next)}` : "/signup";
 
   return (
     <AuthFrame title="Welcome back" intro="Sign in to pick up where you left off.">
@@ -80,7 +77,7 @@ export function LoginPage() {
           <Link to="/forgot-password">Forgot your password?</Link>
         </p>
         <p className="auth__alt">
-          New to Elniv? <Link to="/signup">Create an account</Link>
+          New to Elniv? <Link to={signupUrl}>Create an account</Link>
         </p>
       </form>
     </AuthFrame>
@@ -89,12 +86,16 @@ export function LoginPage() {
 
 export function SignupPage() {
   usePageMeta("Create your account", { index: true });
+  const { search } = useLocation();
+  const next = search.get("next");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+
+  const loginUrl = next ? `/login?next=${encodeURIComponent(next)}` : "/login";
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -105,11 +106,7 @@ export function SignupPage() {
     setBusy(true);
     try {
       const result = await signUp(email.trim(), password, name.trim());
-<<<<<<< HEAD
       if ("session" in result) navigate(safeNext(next, "/onboarding"), { replace: true });
-=======
-      if ("session" in result) navigate("/onboarding", { replace: true });
->>>>>>> a38032910f9fccf6a2b0b70cdb439a40e7251774
       else setSent(true);
     } catch (e) {
       setError(e instanceof AuthError ? e.message : "Couldn't create your account. Please try again.");
@@ -121,7 +118,7 @@ export function SignupPage() {
   if (sent) {
     return (
       <AuthFrame title="Check your email" intro={`We sent a confirmation link to ${email.trim()}. Open it to finish creating your account, then sign in.`}>
-        <Link to="/login" className="btn btn--primary btn--block">
+        <Link to={loginUrl} className="btn btn--primary btn--block">
           Go to sign in
         </Link>
       </AuthFrame>
@@ -153,7 +150,7 @@ export function SignupPage() {
           {busy ? "Creating…" : "Create account"}
         </button>
         <p className="auth__alt">
-          Already have an account? <Link to="/login">Sign in</Link>
+          Already have an account? <Link to={loginUrl}>Sign in</Link>
         </p>
       </form>
     </AuthFrame>
