@@ -18,11 +18,8 @@ export function LandingPage() {
           <h1>A quiet place to think things through.</h1>
           <p className="lead">Talk it out with a calm companion, check in with how you really feel, and bring your own model if you'd like. No noise, no pressure.</p>
           <div className="hero__cta">
-            <Link to="/chat" className="btn btn--primary">
+            <Link to="/checkin" className="btn btn--primary">
               Talk to Elniv
-            </Link>
-            <Link to="/checkin" className="btn">
-              Start a check-in
             </Link>
           </div>
         </div>

@@ -32,6 +32,7 @@ export function LoginPage() {
   usePageMeta("Sign in", { index: true });
   const { search } = useLocation();
   const next = search.get("next");
+  const pendingCheckin = search.get("pendingCheckin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +53,11 @@ export function LoginPage() {
     }
   };
 
-  const signupUrl = next ? `/signup?next=${encodeURIComponent(next)}` : "/signup";
+  const nextParams = new URLSearchParams();
+  if (next) nextParams.set("next", next);
+  if (pendingCheckin) nextParams.set("pendingCheckin", pendingCheckin);
+  const nextParamsStr = nextParams.toString();
+  const signupUrl = nextParamsStr ? `/signup?${nextParamsStr}` : "/signup";
 
   return (
     <AuthFrame title="Welcome back" intro="Sign in to pick up where you left off.">
@@ -88,6 +93,7 @@ export function SignupPage() {
   usePageMeta("Create your account", { index: true });
   const { search } = useLocation();
   const next = search.get("next");
+  const pendingCheckin = search.get("pendingCheckin");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -95,7 +101,11 @@ export function SignupPage() {
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
 
-  const loginUrl = next ? `/login?next=${encodeURIComponent(next)}` : "/login";
+  const nextParams = new URLSearchParams();
+  if (next) nextParams.set("next", next);
+  if (pendingCheckin) nextParams.set("pendingCheckin", pendingCheckin);
+  const nextParamsStr = nextParams.toString();
+  const loginUrl = nextParamsStr ? `/login?${nextParamsStr}` : "/login";
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -106,8 +116,11 @@ export function SignupPage() {
     setBusy(true);
     try {
       const result = await signUp(email.trim(), password, name.trim());
-      if ("session" in result) navigate(safeNext(next, "/onboarding"), { replace: true });
-      else setSent(true);
+      if ("session" in result) {
+        navigate(safeNext(next, pendingCheckin ? "/chat" : "/onboarding"), { replace: true });
+      } else {
+        setSent(true);
+      }
     } catch (e) {
       setError(e instanceof AuthError ? e.message : "Couldn't create your account. Please try again.");
     } finally {

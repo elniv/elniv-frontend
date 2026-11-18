@@ -1,20 +1,23 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { AppShell } from "./components/AppShell";
+import { PublicLayout } from "./components/PublicLayout";
 import { ConfigMissingPage, LandingPage, LoadingScreen, NotFoundPage, AboutPage } from "./pages/Public";
 import { ForgotPasswordPage, LoginPage, ResetPasswordPage, SignupPage, safeNext } from "./pages/AuthPages";
 import { ConversationsProvider } from "./lib/conversations";
 import { consumeAuthRedirect, isOnboarded, refreshSession, watchOtherTabs } from "./lib/auth";
 import { configIssues } from "./lib/config";
+import { checkinsApi } from "./lib/endpoints";
 import { useSession } from "./lib/hooks";
 import { matchRoute, navigate, useLocation } from "./lib/router";
 import { useToast } from "./lib/toast";
+
+const PENDING_CHECKIN_STORAGE_KEY = "elniv_pending_checkin";
 
 // Heavier screens load on demand.
 const HomePage = lazy(() => import("./pages/Home").then((m) => ({ default: m.HomePage })));
 const CheckinFlowPage = lazy(() => import("./pages/CheckinFlow").then((m) => ({ default: m.CheckinFlowPage })));
 const ChatPage = lazy(() => import("./pages/Chat").then((m) => ({ default: m.ChatPage })));
-const CheckinsPage = lazy(() => import("./pages/Checkins").then((m) => ({ default: m.CheckinsPage })));
 const SettingsPage = lazy(() => import("./pages/Settings").then((m) => ({ default: m.SettingsPage })));
 const OnboardingPage = lazy(() => import("./pages/Onboarding").then((m) => ({ default: m.OnboardingPage })));
 
@@ -76,6 +79,34 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Post-auth: Automatically save pending check-in data after login/signup
+  useEffect(() => {
+    if (!session) return;
+    let raw: string | null = null;
+    try {
+      raw = localStorage.getItem(PENDING_CHECKIN_STORAGE_KEY);
+    } catch {
+      /* storage unavailable */
+    }
+    if (!raw) return;
+
+    try {
+      const data = JSON.parse(raw);
+      localStorage.removeItem(PENDING_CHECKIN_STORAGE_KEY);
+      void checkinsApi.create(data).then(() => {
+        toast.success("Check-in saved.");
+      }).catch((e) => {
+        console.warn("Couldn't save pending check-in:", e);
+      });
+    } catch {
+      try {
+        localStorage.removeItem(PENDING_CHECKIN_STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [session, toast]);
+
   if (configIssues().length > 0) return <ConfigMissingPage />;
   if (!ready) return <LoadingScreen />;
 
@@ -122,22 +153,20 @@ export function App() {
     );
   }
   if (pathname === "/checkin") {
-    return (
-      <Protected>
-        <AppArea>
+    return signedIn ? (
+      <AppArea>
+        <CheckinFlowPage />
+      </AppArea>
+    ) : (
+      <PublicLayout showFooter={false}>
+        <Suspense fallback={<LoadingScreen />}>
           <CheckinFlowPage />
-        </AppArea>
-      </Protected>
+        </Suspense>
+      </PublicLayout>
     );
   }
   if (pathname === "/checkins") {
-    return (
-      <Protected>
-        <AppArea>
-          <CheckinsPage />
-        </AppArea>
-      </Protected>
-    );
+    return <Redirect to={signedIn ? "/home" : "/"} />;
   }
   if (pathname === "/settings") {
     return (

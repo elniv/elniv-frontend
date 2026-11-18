@@ -3,13 +3,25 @@ import { Mark } from "../components/Logo";
 import { Icon } from "../components/Icon";
 import { Spinner } from "../components/Skeleton";
 import { Markdown } from "../lib/markdown";
-import { Link } from "../lib/router";
+import { navigate } from "../lib/router";
 import { checkinsApi, chatApi, voiceApi } from "../lib/endpoints";
 import { useVoiceRecorder, extensionFor } from "../lib/voice";
 import { formatDuration } from "../lib/format";
 import { usePageMeta, useSession } from "../lib/hooks";
 import { displayName } from "../lib/auth";
 import { useToast } from "../lib/toast";
+
+export const PENDING_CHECKIN_STORAGE_KEY = "elniv_pending_checkin";
+
+function generateGuestReflection(emotions: string[], factors: string[], notes: string | null): string {
+  const emotionText = emotions.length > 0 ? emotions.slice(0, 3).join(", ").toLowerCase() : "how you feel";
+  const factorText = factors.length > 0 ? ` with ${factors.slice(0, 2).join(" and ").toLowerCase()}` : "";
+
+  if (notes) {
+    return `Thank you for taking a moment to pause and express what's on your mind. Acknowledging that you're feeling ${emotionText}${factorText} is a gentle, meaningful first step. When you're ready, let's explore this together in chat.`;
+  }
+  return `Thank you for taking a moment to pause. Acknowledging that you're feeling ${emotionText}${factorText} is a gentle, meaningful first step. When you're ready, let's explore this together in chat so you don't have to carry it alone.`;
+}
 
 const EMOTIONS = [
   "Calm",
@@ -89,6 +101,10 @@ export function CheckinFlowPage() {
   // Handle voice transcribe
   const handleTranscribe = async () => {
     if (!recorder.recording) return;
+    if (!session) {
+      toast.error("Sign in to transcribe audio notes, or write your thoughts below.");
+      return;
+    }
     setTranscribing(true);
     try {
       const ext = extensionFor(recorder.recording.mimeType);
@@ -103,39 +119,63 @@ export function CheckinFlowPage() {
     }
   };
 
-  // Submit check-in to backend and request conversational reflection
+  const getCheckinPayload = () => ({
+    mood: (selectedEmotions.length > 0 ? selectedEmotions.join(", ") : "Unspecified").slice(0, 50),
+    focus_area: (selectedFactors.length > 0 ? selectedFactors.join(", ") : "General").slice(0, 100),
+    context: expression.trim() || null,
+  });
+
+  // Submit check-in and request conversational reflection
   const handleSubmit = async () => {
+    setStep(4);
     setSaving(true);
-    const moodStr = (selectedEmotions.length > 0 ? selectedEmotions.join(", ") : "Unspecified").slice(0, 50);
-    const focusStr = (selectedFactors.length > 0 ? selectedFactors.join(", ") : "General").slice(0, 100);
     const contextText = expression.trim() || null;
 
-    try {
-      // 1. Save check-in record preserving existing backend API
-      await checkinsApi.create({
-        mood: moodStr,
-        focus_area: focusStr,
-        context: contextText,
-      });
-
-      setStep(4);
-
-      // 2. Transition into AI conversational reflection
-      const prompt = `I just checked in with myself.
+    if (session) {
+      try {
+        const prompt = `I just checked in with myself.
 How I'm feeling: ${selectedEmotions.length > 0 ? selectedEmotions.join(", ") : "Not specified"}
 Contributing factors: ${selectedFactors.length > 0 ? selectedFactors.join(", ") : "Not specified"}
 ${contextText ? `What's on my mind: "${contextText}"` : "I didn't add extra notes."}
 
-Please offer a gentle, grounding, and empathetic 2-3 sentence reflection to help me process this moment.`;
+Please give a short, warm acknowledgment of how I am feeling. Keep it strictly concise: maximum 3-4 sentences. Do not write a long paragraph.`;
 
-      const chatRes = await chatApi.send(prompt, null);
-      setReflection(chatRes.reply);
-      setConvoId(chatRes.conversation_id);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't complete your check-in.");
-      setStep(3);
-    } finally {
+        const chatRes = await chatApi.send(prompt, null);
+        setReflection(chatRes.reply);
+        setConvoId(chatRes.conversation_id);
+      } catch {
+        // Fallback to concise local reflection if chat call encounters an error
+        setReflection(generateGuestReflection(selectedEmotions, selectedFactors, contextText));
+      } finally {
+        setSaving(false);
+      }
+    } else {
+      // Guest user: display a warm, concise client-side acknowledgment
+      setReflection(generateGuestReflection(selectedEmotions, selectedFactors, contextText));
       setSaving(false);
+    }
+  };
+
+  const handleContinueInChat = async () => {
+    const payload = getCheckinPayload();
+
+    if (session) {
+      setSaving(true);
+      try {
+        await checkinsApi.create(payload);
+      } catch (e) {
+        console.warn("Couldn't save check-in immediately:", e);
+      } finally {
+        setSaving(false);
+      }
+      navigate(convoId ? `/chat/${convoId}` : "/chat");
+    } else {
+      try {
+        localStorage.setItem(PENDING_CHECKIN_STORAGE_KEY, JSON.stringify(payload));
+      } catch {
+        /* storage unavailable in private mode */
+      }
+      navigate("/login?next=/chat&pendingCheckin=true");
     }
   };
 
@@ -367,18 +407,14 @@ Please offer a gentle, grounding, and empathetic 2-3 sentence reflection to help
 
             {reflection && (
               <div className="reflection-actions">
-                {convoId ? (
-                  <Link to={`/chat/${convoId}`} className="btn btn--primary btn--block">
-                    <Icon name="chat" size={18} /> Continue this in Chat
-                  </Link>
-                ) : (
-                  <Link to="/chat" className="btn btn--primary btn--block">
-                    <Icon name="chat" size={18} /> Talk with Elniv
-                  </Link>
-                )}
-                <Link to="/home" className="btn btn--ghost btn--block">
-                  Done for now
-                </Link>
+                <button
+                  type="button"
+                  className="btn btn--primary btn--block"
+                  disabled={saving}
+                  onClick={() => void handleContinueInChat()}
+                >
+                  <Icon name="chat" size={18} /> Continue this in Chat
+                </button>
               </div>
             )}
           </div>
