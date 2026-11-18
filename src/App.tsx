@@ -11,6 +11,8 @@ import { matchRoute, navigate, useLocation } from "./lib/router";
 import { useToast } from "./lib/toast";
 
 // Heavier screens load on demand.
+const HomePage = lazy(() => import("./pages/Home").then((m) => ({ default: m.HomePage })));
+const CheckinFlowPage = lazy(() => import("./pages/CheckinFlow").then((m) => ({ default: m.CheckinFlowPage })));
 const ChatPage = lazy(() => import("./pages/Chat").then((m) => ({ default: m.ChatPage })));
 const CheckinsPage = lazy(() => import("./pages/Checkins").then((m) => ({ default: m.CheckinsPage })));
 const SettingsPage = lazy(() => import("./pages/Settings").then((m) => ({ default: m.SettingsPage })));
@@ -18,13 +20,6 @@ const OnboardingPage = lazy(() => import("./pages/Onboarding").then((m) => ({ de
 
 function Redirect({ to }: { to: string }) {
   useEffect(() => navigate(to, { replace: true }), [to]);
-  return <LoadingScreen />;
-}
-
-function RedirectToChat() {
-  useEffect(() => {
-    navigate("/chat", { replace: true });
-  }, []);
   return <LoadingScreen />;
 }
 
@@ -87,6 +82,15 @@ export function App() {
   const signedIn = session !== null;
   const guestOnly = (page: ReactNode) => (signedIn ? <Redirect to={safeNext(search.get("next"))} /> : page);
 
+  if (pathname === "/home" || (pathname === "/" && signedIn)) {
+    return (
+      <Protected>
+        <AppArea>
+          <HomePage />
+        </AppArea>
+      </Protected>
+    );
+  }
   if (pathname === "/") return <LandingPage />;
   if (pathname === "/about") return <AboutPage />;
   if (pathname === "/login") return guestOnly(<LoginPage />);
@@ -98,7 +102,7 @@ export function App() {
     return (
       <Protected>
         {session && isOnboarded(session.user) ? (
-          <RedirectToChat />
+          <Redirect to="/home" />
         ) : (
           <Suspense fallback={<LoadingScreen />}>
             <OnboardingPage />
@@ -117,7 +121,16 @@ export function App() {
       </Protected>
     );
   }
-  if (pathname === "/checkin" || pathname === "/checkins") {
+  if (pathname === "/checkin") {
+    return (
+      <Protected>
+        <AppArea>
+          <CheckinFlowPage />
+        </AppArea>
+      </Protected>
+    );
+  }
+  if (pathname === "/checkins") {
     return (
       <Protected>
         <AppArea>

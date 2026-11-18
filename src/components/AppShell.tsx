@@ -146,7 +146,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </a>
       <aside ref={rail} className={`rail ${open ? "is-open" : ""}`} aria-label="Elniv navigation">
         <div className="rail__top">
-          <Brand to="/chat" />
+          <Brand to="/home" />
           <button type="button" className="icon-btn" onClick={() => setOpen(false)} aria-label="Close menu" style={{ display: open ? "grid" : "none" }}>
             <Icon name="x" />
           </button>
@@ -155,6 +155,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Icon name="plus" size={18} /> New conversation
         </Link>
         <nav className="nav" aria-label="Sections" style={{ marginTop: 12 }}>
+          <Link to="/home" aria-current={pathname === "/home" || pathname === "/" ? "page" : undefined}>
+            <Icon name="home" size={18} /> Home
+          </Link>
           <Link to="/chat" aria-current={pathname.startsWith("/chat") ? "page" : undefined}>
             <Icon name="chat" size={18} /> Conversations
           </Link>
@@ -227,7 +230,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <button ref={menuButton} type="button" className="icon-btn" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(true)}>
             <Icon name="menu" />
           </button>
-          <Brand to="/chat" />
+          <Brand to="/home" />
           <Link to="/chat" className="icon-btn" aria-label="New conversation">
             <Icon name="plus" />
           </Link>
