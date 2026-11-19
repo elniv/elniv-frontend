@@ -1,4 +1,5 @@
 const PATHS = {
+  home: "M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H4a1 1 0 0 1-1-1v-9.5z",
   menu: "M4 7h16M4 12h16M4 17h16",
   plus: "M12 5v14M5 12h14",
   send: "M5 12l14-7-5 14-2.5-5.5L5 12z",
