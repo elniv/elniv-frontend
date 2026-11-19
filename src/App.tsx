@@ -15,7 +15,6 @@ import { useToast } from "./lib/toast";
 const PENDING_CHECKIN_STORAGE_KEY = "elniv_pending_checkin";
 
 // Heavier screens load on demand.
-const HomePage = lazy(() => import("./pages/Home").then((m) => ({ default: m.HomePage })));
 const CheckinFlowPage = lazy(() => import("./pages/CheckinFlow").then((m) => ({ default: m.CheckinFlowPage })));
 const ChatPage = lazy(() => import("./pages/Chat").then((m) => ({ default: m.ChatPage })));
 const SettingsPage = lazy(() => import("./pages/Settings").then((m) => ({ default: m.SettingsPage })));
@@ -117,9 +116,7 @@ export function App() {
   if (pathname === "/home" || (pathname === "/" && signedIn)) {
     return (
       <Protected>
-        <AppArea>
-          <HomePage />
-        </AppArea>
+        <Redirect to="/chat" />
       </Protected>
     );
   }
@@ -134,7 +131,7 @@ export function App() {
     return (
       <Protected>
         {session && isOnboarded(session.user) ? (
-          <Redirect to="/home" />
+          <Redirect to="/chat" />
         ) : (
           <Suspense fallback={<LoadingScreen />}>
             <OnboardingPage />
@@ -167,7 +164,7 @@ export function App() {
     );
   }
   if (pathname === "/checkins") {
-    return <Redirect to={signedIn ? "/home" : "/"} />;
+    return <Redirect to={signedIn ? "/chat" : "/"} />;
   }
   if (pathname === "/activities") {
     return (

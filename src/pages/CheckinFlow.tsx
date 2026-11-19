@@ -119,17 +119,35 @@ export function CheckinFlowPage() {
     }
   };
 
-  const getCheckinPayload = () => ({
+  const getCheckinPayload = (overrideContext?: string | null) => ({
     mood: (selectedEmotions.length > 0 ? selectedEmotions.join(", ") : "Unspecified").slice(0, 50),
     focus_area: (selectedFactors.length > 0 ? selectedFactors.join(", ") : "General").slice(0, 100),
-    context: expression.trim() || null,
+    context: overrideContext !== undefined ? overrideContext : (expression.trim() || null),
   });
 
   // Submit check-in and request conversational reflection
-  const handleSubmit = async () => {
+  const handleSubmit = async (skipNotes = false) => {
     setStep(4);
     setSaving(true);
-    const contextText = expression.trim() || null;
+    let contextText: string | null = null;
+
+    if (!skipNotes) {
+      if (expression.trim()) {
+        contextText = expression.trim();
+      } else if (recorder.recording && session) {
+        try {
+          const ext = extensionFor(recorder.recording.mimeType);
+          const res = await voiceApi.transcribe(recorder.recording.blob, `checkin-voice.${ext}`);
+          contextText = res.text.trim() || null;
+          setExpression(res.text);
+        } catch {
+          // If transcription fails, contextText remains null
+        }
+      }
+    } else {
+      setExpression("");
+      recorder.reset();
+    }
 
     if (session) {
       try {
@@ -217,23 +235,35 @@ Please give a short, warm acknowledgment of how I am feeling. Keep it strictly c
           </div>
 
           <div className="flow-footer">
-            <button
-              type="button"
-              className="btn btn--ghost"
-              onClick={() => {
-                setSelectedEmotions([]);
-                setStep(2);
-              }}
-            >
-              Skip
-            </button>
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={() => setStep(2)}
-            >
-              Continue
-            </button>
+            <div />
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <button
+                type="button"
+                className="home-secondary-link"
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "8px 0" }}
+                onClick={() => navigate("/chat")}
+              >
+                Talk to Elniv instead <span aria-hidden="true">&rarr;</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => {
+                  setSelectedEmotions([]);
+                  setStep(2);
+                }}
+              >
+                Skip
+              </button>
+              <button
+                type="button"
+                className="btn btn--primary"
+                disabled={selectedEmotions.length === 0}
+                onClick={() => setStep(2)}
+              >
+                Continue
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -268,7 +298,15 @@ Please give a short, warm acknowledgment of how I am feeling. Keep it strictly c
             <button type="button" className="btn btn--ghost" onClick={() => setStep(1)}>
               Back
             </button>
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <button
+                type="button"
+                className="home-secondary-link"
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "8px 0" }}
+                onClick={() => navigate("/chat")}
+              >
+                Talk to Elniv instead <span aria-hidden="true">&rarr;</span>
+              </button>
               <button
                 type="button"
                 className="btn btn--ghost"
@@ -282,6 +320,7 @@ Please give a short, warm acknowledgment of how I am feeling. Keep it strictly c
               <button
                 type="button"
                 className="btn btn--primary"
+                disabled={selectedFactors.length === 0}
                 onClick={() => setStep(3)}
               >
                 Continue
@@ -363,20 +402,39 @@ Please give a short, warm acknowledgment of how I am feeling. Keep it strictly c
             <button type="button" className="btn btn--ghost" onClick={() => setStep(2)} disabled={saving}>
               Back
             </button>
-            <button
-              type="button"
-              className="btn btn--primary"
-              disabled={saving}
-              onClick={() => void handleSubmit()}
-            >
-              {saving ? (
-                <>
-                  <Spinner label="Saving" /> Saving check-in…
-                </>
-              ) : (
-                "Complete check-in"
-              )}
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <button
+                type="button"
+                className="home-secondary-link"
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "8px 0" }}
+                disabled={saving}
+                onClick={() => navigate("/chat")}
+              >
+                Talk to Elniv instead <span aria-hidden="true">&rarr;</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn--ghost"
+                disabled={saving}
+                onClick={() => void handleSubmit(true)}
+              >
+                Skip
+              </button>
+              <button
+                type="button"
+                className="btn btn--primary"
+                disabled={saving || (!expression.trim() && !recorder.recording)}
+                onClick={() => void handleSubmit(false)}
+              >
+                {saving ? (
+                  <>
+                    <Spinner label="Saving" /> Saving check-in…
+                  </>
+                ) : (
+                  "Continue"
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
