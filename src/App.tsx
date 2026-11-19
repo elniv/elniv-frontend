@@ -20,6 +20,7 @@ const CheckinFlowPage = lazy(() => import("./pages/CheckinFlow").then((m) => ({ 
 const ChatPage = lazy(() => import("./pages/Chat").then((m) => ({ default: m.ChatPage })));
 const SettingsPage = lazy(() => import("./pages/Settings").then((m) => ({ default: m.SettingsPage })));
 const OnboardingPage = lazy(() => import("./pages/Onboarding").then((m) => ({ default: m.OnboardingPage })));
+const ActivitiesPage = lazy(() => import("./pages/Activities").then((m) => ({ default: m.ActivitiesPage })));
 
 function Redirect({ to }: { to: string }) {
   useEffect(() => navigate(to, { replace: true }), [to]);
@@ -167,6 +168,15 @@ export function App() {
   }
   if (pathname === "/checkins") {
     return <Redirect to={signedIn ? "/home" : "/"} />;
+  }
+  if (pathname === "/activities") {
+    return (
+      <Protected>
+        <AppArea>
+          <ActivitiesPage />
+        </AppArea>
+      </Protected>
+    );
   }
   if (pathname === "/settings") {
     return (

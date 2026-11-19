@@ -1,3 +1,5 @@
+@import "./activities.css";
+
 /* ───────────────────────── Tokens ───────────────────────── */
 :root {
   --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Noto Serif", serif;

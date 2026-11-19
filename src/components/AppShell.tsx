@@ -161,6 +161,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Link to="/chat" aria-current={pathname.startsWith("/chat") ? "page" : undefined}>
             <Icon name="chat" size={18} /> Conversations
           </Link>
+          <Link to="/activities" aria-current={pathname.startsWith("/activities") ? "page" : undefined}>
+            <Icon name="leaf" size={18} /> Activities
+          </Link>
           <Link to="/settings" aria-current={pathname === "/settings" ? "page" : undefined}>
             <Icon name="settings" size={18} /> Settings
           </Link>
