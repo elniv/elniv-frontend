@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 const PATHS = {
   home: "M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H4a1 1 0 0 1-1-1v-9.5z",
   menu: "M4 7h16M4 12h16M4 17h16",
@@ -23,11 +25,17 @@ const PATHS = {
   logout: "M9 4H5v16h4M16 8l4 4-4 4M20 12H9",
   down: "M6 9l6 6 6-6",
   copy: "M9 9h10v11H9zM5 15V4h10",
+  leaf: "M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10ZM2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12",
+  cloud: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z",
+  wind: "M17.7 7.7A2.5 2.5 0 1 1 19 12H2M12.6 19.4A2 2 0 1 0 14 16H2M19 16.5a2 2 0 1 1 1.7 3.2H2",
+  sparkle: "M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6l2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6l2.1-2.1",
+  waves: "M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1",
+  book: "M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5ZM4 19.5A2.5 2.5 0 0 1 6.5 17H20",
 } as const;
 
 export type IconName = keyof typeof PATHS;
 
-export function Icon({ name, size = 20, className }: { name: IconName; size?: number; className?: string }) {
+export function Icon({ name, size = 20, className, style }: { name: IconName; size?: number; className?: string; style?: CSSProperties }) {
   return (
     <svg
       width={size}
@@ -41,6 +49,7 @@ export function Icon({ name, size = 20, className }: { name: IconName; size?: nu
       aria-hidden="true"
       focusable="false"
       className={className}
+      style={style}
     >
       <path d={PATHS[name]} />
     </svg>
