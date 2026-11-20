@@ -113,12 +113,11 @@ export function App() {
   const signedIn = session !== null;
   const guestOnly = (page: ReactNode) => (signedIn ? <Redirect to={safeNext(search.get("next"))} /> : page);
 
-  if (pathname === "/home" || (pathname === "/" && signedIn)) {
-    return (
-      <Protected>
-        <Redirect to="/chat" />
-      </Protected>
-    );
+  if (pathname === "/home") {
+    return <Redirect to={signedIn ? "/chat" : "/"} />;
+  }
+  if (pathname === "/" && signedIn) {
+    return <Redirect to="/chat" />;
   }
   if (pathname === "/") return <LandingPage />;
   if (pathname === "/about") return <AboutPage />;

@@ -39,6 +39,11 @@ const STARTERS: Record<string, string[]> = {
 let localId = 0;
 const nextLocalId = (): string => `local-${Date.now()}-${localId++}`;
 
+import { parseMessageActivities } from "../lib/activities";
+import type { ParsedActivity } from "../lib/activities";
+export { parseMessageActivities };
+export type { ParsedActivity };
+
 export function ChatPage() {
   const { pathname, search } = useLocation();
   const routeId = matchRoute("/chat/:id", pathname)?.id ?? null;
@@ -202,13 +207,15 @@ export function ChatPage() {
       setSpeakingId(null);
       return;
     }
+    const { cleanContent } = parseMessageActivities(message.content);
     setSpeakingId(message.id);
-    speak(message.content, () => setSpeakingId((current) => (current === message.id ? null : current)));
+    speak(cleanContent, () => setSpeakingId((current) => (current === message.id ? null : current)));
   };
 
   const copy = async (message: UiMessage) => {
     try {
-      await navigator.clipboard.writeText(message.content);
+      const { cleanContent } = parseMessageActivities(message.content);
+      await navigator.clipboard.writeText(cleanContent);
       toast.success("Copied.");
     } catch {
       toast.error("Couldn't copy. Select the text and copy it manually.");
@@ -327,33 +334,54 @@ export function ChatPage() {
                   </div>
                 )}
               </div>
-            ) : (
-              <div key={message.id} className="msg">
-                <div className="msg__assistant">
-                  <Mark size={30} />
-                  <div className="msg__body">
-                    <Markdown text={message.content} />
-                    <div className="msg__meta">
-                      <span>{timeLabel(message.created_at)}</span>
-                      <button type="button" className="icon-btn icon-btn--sm" aria-label="Copy reply" onClick={() => void copy(message)}>
-                        <Icon name="copy" size={16} />
-                      </button>
-                      {canSpeak() && (
-                        <button
-                          type="button"
-                          className="icon-btn icon-btn--sm"
-                          aria-label={speakingId === message.id ? "Stop reading aloud" : "Read reply aloud"}
-                          aria-pressed={speakingId === message.id}
-                          onClick={() => readAloud(message)}
-                        >
-                          <Icon name={speakingId === message.id ? "stop" : "volume"} size={16} />
-                        </button>
+            ) : (() => {
+              const { cleanContent, activities } = parseMessageActivities(message.content);
+              return (
+                <div key={message.id} className="msg">
+                  <div className="msg__assistant">
+                    <Mark size={30} />
+                    <div className="msg__body">
+                      <Markdown text={cleanContent} />
+
+                      {activities.length > 0 && (
+                        <div className="msg__activities" role="group" aria-label="Suggested activities">
+                          {activities.map((act) => (
+                            <button
+                              key={act.type}
+                              type="button"
+                              className="activity-pill-btn"
+                              onClick={() => navigate(`/activities?tool=${act.type}`)}
+                            >
+                              <span className="activity-pill-icon" aria-hidden="true">{act.icon}</span>
+                              <span>{act.label}</span>
+                              <span className="activity-pill-arrow" aria-hidden="true">&rarr;</span>
+                            </button>
+                          ))}
+                        </div>
                       )}
+
+                      <div className="msg__meta">
+                        <span>{timeLabel(message.created_at)}</span>
+                        <button type="button" className="icon-btn icon-btn--sm" aria-label="Copy reply" onClick={() => void copy(message)}>
+                          <Icon name="copy" size={16} />
+                        </button>
+                        {canSpeak() && (
+                          <button
+                            type="button"
+                            className="icon-btn icon-btn--sm"
+                            aria-label={speakingId === message.id ? "Stop reading aloud" : "Read reply aloud"}
+                            aria-pressed={speakingId === message.id}
+                            onClick={() => readAloud(message)}
+                          >
+                            <Icon name={speakingId === message.id ? "stop" : "volume"} size={16} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ),
+              );
+            })(),
           )}
 
           {waiting && (

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "../components/Icon";
 import { usePageMeta } from "../lib/hooks";
+import { navigate, useLocation } from "../lib/router";
 import { GentleBreathing } from "../components/activities/GentleBreathing";
 import { ZenRipples } from "../components/activities/ZenRipples";
 import { MindfulJournal } from "../components/activities/MindfulJournal";
@@ -45,7 +46,28 @@ const ACTIVITIES: ActivityCardDef[] = [
 
 export function ActivitiesPage() {
   usePageMeta("Activities & Reset");
-  const [selectedActivity, setSelectedActivity] = useState<ActivityId | null>(null);
+  const { search } = useLocation();
+  const toolParam = search.get("tool");
+
+  const [selectedActivity, setSelectedActivity] = useState<ActivityId | null>(() => {
+    if (toolParam === "breathing" || toolParam === "ripples" || toolParam === "journal") {
+      return toolParam;
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (toolParam === "breathing" || toolParam === "ripples" || toolParam === "journal") {
+      setSelectedActivity(toolParam);
+    }
+  }, [toolParam]);
+
+  const handleBack = () => {
+    setSelectedActivity(null);
+    if (search.get("tool")) {
+      navigate("/activities", { replace: true });
+    }
+  };
 
   const activeDef = ACTIVITIES.find((a) => a.id === selectedActivity);
 
@@ -105,7 +127,7 @@ export function ActivitiesPage() {
             <button
               type="button"
               className="activity-back-link"
-              onClick={() => setSelectedActivity(null)}
+              onClick={handleBack}
               aria-label="Return to all activities"
             >
               <span aria-hidden="true">&larr;</span> Back to activities
