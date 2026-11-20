@@ -155,9 +155,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Icon name="plus" size={18} /> New conversation
         </Link>
         <nav className="nav" aria-label="Sections" style={{ marginTop: 12 }}>
-          <Link to="/home" aria-current={pathname === "/home" || pathname === "/" ? "page" : undefined}>
-            <Icon name="home" size={18} /> Home
-          </Link>
           <Link to="/chat" aria-current={pathname.startsWith("/chat") ? "page" : undefined}>
             <Icon name="chat" size={18} /> Conversations
           </Link>
