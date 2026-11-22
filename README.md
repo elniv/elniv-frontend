@@ -63,13 +63,13 @@ Then, **on the API**, set `CORS_ORIGINS` to the exact origin of the deployed sit
 
 Auth is Supabase: the browser signs in against Supabase Auth directly and sends the resulting access token as `Authorization: Bearer …` to the API, refreshing it before expiry and once more on a 401. The API contract used (all under `/api/v1`):
 
-- `POST /chat/`
+- `POST /chat/stream` (Server-Sent Events: `delta`, `done`, `error`); `POST /chat/` is the non-streaming fallback used when the server has no stream route
 - `GET /conversations/`, `PATCH|DELETE /conversations/{id}`, `GET /conversations/{id}/messages`
 - `GET|POST /checkins/`, `DELETE /checkins/{id}`
 - `GET|PUT|DELETE /llm-settings/`, `GET /llm-settings/providers`
 - `GET /voice/status`, `POST /voice/transcribe` (multipart `audio`)
 
-`GET /conversations/{id}/messages`, the `/voice/*` routes, CORS and the `has_api_key` field on LLM settings were added to the API alongside this app, so deploy the matching backend version.
+`POST /chat/stream`, `GET /conversations/{id}/messages`, the `/voice/*` routes, CORS and the `has_api_key` field on LLM settings were added to the API alongside this app, so deploy the matching backend version.
 
 ## Voice
 
@@ -77,6 +77,6 @@ Recording uses `MediaRecorder` and the microphone permission prompt. The clip is
 
 ## Known limits
 
-- Replies arrive whole, not streamed (the API returns one response per message).
+- Replies stream in as they're generated. If the connection drops mid-reply, the partial text is discarded (the server saves a turn only when the reply completes) and the message shows Retry.
 - Voice needs a transcription key and a browser with `MediaRecorder`; read-aloud uses the browser's speech synthesis and needs no key.
 - There are no standalone Privacy or Terms pages, so none are linked. The About page states what is stored.

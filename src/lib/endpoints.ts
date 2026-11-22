@@ -1,4 +1,4 @@
-import { api } from "./api";
+import { api, ApiError, streamRequest } from "./api";
 import type {
   ChatResponse,
   Checkin,
@@ -19,6 +19,23 @@ import type {
 export const chatApi = {
   send: (message: string, conversationId: string | null, signal?: AbortSignal) =>
     api.post<ChatResponse>("/chat/", { message, conversation_id: conversationId }, { timeoutMs: 90_000, signal }),
+  /**
+   * Stream the reply, calling `onDelta` per chunk. Falls back to the non-streaming
+   * endpoint if the server has no /chat/stream route (older backend); a 404 for a missing
+   * conversation reads "Conversation not found.", so it isn't mistaken for that.
+   */
+  stream: async (message: string, conversationId: string | null, onDelta: (text: string) => void, signal?: AbortSignal): Promise<ChatResponse> => {
+    const body = { message, conversation_id: conversationId };
+    try {
+      const done = await streamRequest<{ conversation_id: string; reply: string }>("/chat/stream", body, { onDelta }, signal);
+      return { status: "success", conversation_id: done.conversation_id, reply: done.reply };
+    } catch (error) {
+      if (error instanceof ApiError && (error.status === 405 || (error.status === 404 && error.message === "Not Found"))) {
+        return chatApi.send(message, conversationId, signal);
+      }
+      throw error;
+    }
+  },
 };
 
 export const conversationsApi = {

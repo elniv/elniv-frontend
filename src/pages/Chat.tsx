@@ -26,6 +26,7 @@ interface UiMessage {
   created_at: string;
   failed?: boolean;
   error?: string;
+  streaming?: boolean;
 }
 
 const STARTERS: Record<string, string[]> = {
@@ -35,6 +36,8 @@ const STARTERS: Record<string, string[]> = {
   feelings: ["I want to understand why I feel the way I do.", "Something has been bothering me and I can't name it.", "I'd like to talk about how today went."],
   growth: ["I want to build a healthier habit and keep failing.", "Help me figure out what I want from this year.", "I'd like to reflect on a pattern I keep repeating."],
 };
+
+const PARTIAL_TAG = /\[(?:ACTIVITY[^\]]*|A(?:C(?:T(?:I(?:V(?:I(?:T)?)?)?)?)?)?)$/i;
 
 let localId = 0;
 const nextLocalId = (): string => `local-${Date.now()}-${localId++}`;
@@ -168,9 +171,24 @@ export function ChatPage() {
 
       const controller = new AbortController();
       sendAbort.current = controller;
+      const replyId = nextLocalId();
+      let started = false;
       try {
-        const reply = await chatApi.send(content, conversationId, controller.signal);
-        setMessages((current) => [...current, { id: nextLocalId(), role: "assistant", content: reply.reply, created_at: new Date().toISOString() }]);
+        const reply = await chatApi.stream(
+          content,
+          conversationId,
+          (delta) => {
+            if (!started) {
+              started = true;
+              setMessages((current) => [...current, { id: replyId, role: "assistant", content: delta, created_at: new Date().toISOString(), streaming: true }]);
+            } else {
+              setMessages((current) => current.map((m) => (m.id === replyId ? { ...m, content: m.content + delta } : m)));
+            }
+          },
+          controller.signal,
+        );
+        const finished: UiMessage = { id: replyId, role: "assistant", content: reply.reply, created_at: new Date().toISOString() };
+        setMessages((current) => (started ? current.map((m) => (m.id === replyId ? finished : m)) : [...current, finished]));
         if (reply.conversation_id && reply.conversation_id !== conversationId) {
           adopted.current = reply.conversation_id;
           setConversationId(reply.conversation_id);
@@ -180,7 +198,8 @@ export function ChatPage() {
       } catch (error) {
         if (isAbort(error)) return;
         const message = error instanceof Error ? error.message : "That message didn't go through.";
-        setMessages((current) => current.map((m) => (m.id === id ? { ...m, failed: true, error: message } : m)));
+        // A partial reply isn't saved by the server, so drop it; Retry resends the message.
+        setMessages((current) => current.filter((m) => m.id !== replyId).map((m) => (m.id === id ? { ...m, failed: true, error: message } : m)));
       } finally {
         setWaiting(false);
         sendAbort.current = null;
@@ -335,7 +354,8 @@ export function ChatPage() {
                 )}
               </div>
             ) : (() => {
-              const { cleanContent, activities } = parseMessageActivities(message.content);
+              // While streaming, hide a half-arrived [ACTIVITY: …] tag so it never flashes as raw text.
+              const { cleanContent, activities } = parseMessageActivities(message.streaming ? message.content.replace(PARTIAL_TAG, "") : message.content);
               return (
                 <div key={message.id} className="msg">
                   <div className="msg__assistant">
@@ -360,6 +380,7 @@ export function ChatPage() {
                         </div>
                       )}
 
+                      {!message.streaming && (
                       <div className="msg__meta">
                         <span>{timeLabel(message.created_at)}</span>
                         <button type="button" className="icon-btn icon-btn--sm" aria-label="Copy reply" onClick={() => void copy(message)}>
@@ -377,6 +398,7 @@ export function ChatPage() {
                           </button>
                         )}
                       </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -384,7 +406,7 @@ export function ChatPage() {
             })(),
           )}
 
-          {waiting && (
+          {waiting && !messages.some((m) => m.streaming) && (
             <div className="thinking" role="status">
               <Mark size={30} motion="think" />
               <span className="dots" aria-hidden="true">

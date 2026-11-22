@@ -84,3 +84,19 @@ test("auth: safeNext preserves valid paths and rejects open redirects", () => {
   assert.equal(safeNext("//malicious.com"), "/chat");
   assert.equal(safeNext("javascript:alert(1)"), "/chat");
 });
+
+import { createSseParser } from "../src/lib/sse.ts";
+
+test("sse parser reassembles events split across chunks", () => {
+  const parse = createSseParser();
+  assert.deepEqual(parse('event: delta\ndata: {"text":"Hel'), []);
+  assert.deepEqual(parse('lo"}\n\n: keep-alive\n\nevent: done\r\ndata: {"reply":"Hello"}\r\n\r\n'), [
+    { event: "delta", data: '{"text":"Hello"}' },
+    { event: "done", data: '{"reply":"Hello"}' },
+  ]);
+});
+
+test("sse parser defaults the event name and joins multi-line data", () => {
+  const parse = createSseParser();
+  assert.deepEqual(parse("data: a\ndata: b\n\n"), [{ event: "message", data: "a\nb" }]);
+});
